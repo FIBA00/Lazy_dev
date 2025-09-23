@@ -2,7 +2,6 @@
 
 # Detect platform: Linux or Termux
 
-
 # Update system
 echo "🔄 Updating packages..."
 $SUDO $PACKAGE_MANAGER update -y

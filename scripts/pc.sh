@@ -3,20 +3,6 @@
 # Inform the user about the script's purpose and warnings
 echo "------------------------------------------------------"
 echo "🔧 Welcome to the Lazy_dev Setup Script"
-echo " / This script will:"
-echo " /   - Update your system"
-echo " /   - Set up Git configurations"
-echo " /   - Install Python and set up a virtual environment"
-echo " /   - Install essential development tools"
-echo " /   - Set up SSH keys for GitHub"
-echo " /   - Add useful aliases and custom functions to your shell configuration"
-echo ""
-echo " / ⚠️  Warnings:"
-echo " /   - Do not run this script as root. Run it as a normal user."
-echo " /   - Some commands prompt you for input. Please read carefully."
-echo " /   - Some commands already use root for setup, please enter the password."
-echo " /   - Ensure you have a stable internet connection."
-echo " / ------------------------------------------------------"
 echo " / Press Enter to continue..."
 read -r
 
@@ -200,25 +186,6 @@ create_venv() {
     source "$venv_name/bin/activate"
 }
 
-# Function to install requirements
-install_req() {
-    local REQ_FILE="requirements.txt"
-    if [ ! -f "$REQ_FILE" ]; then
-        echo "❌ requirements.txt not found. Checking root directory..."
-        REQ_FILE="../$REQ_FILE"
-        
-        # Downloading the packages from GitHub
-        if [ ! -f "$REQ_FILE" ]; then
-            echo "❌ requirements.txt not found. Downloading from GitHub..."
-            curl -sSl "https://raw.githubusercontent.com/fraol869/Lazy_dev/main/requirements.txt" -o "requirements.txt"
-            REQ_FILE="requirements.txt"
-        fi
-    fi
-
-    echo "🔧 Installing requirements from $REQ_FILE"
-    pip install -r "$REQ_FILE" $break_system_flag
-    check_success "Requirements installation"
-}
 
 # Ask the user if they want to create a virtual environment
 input_checkup "🔧 Do you want to create a new virtual environment? (yes/no): " "yes" should_create_venv
@@ -227,7 +194,6 @@ input_checkup "🔧 Do you want to create a new virtual environment? (yes/no): "
 break_system_flag=""
 if [[ "$should_create_venv" == "yes" || "$should_create_venv" == "y" ]]; then
     create_venv
-    install_req
 else
     input_checkup "🔧 Do you want to install packages globally with --break-system-packages? (yes/no): " "no" break_system
     if [[ "$break_system" == "yes" || "$break_system" == "y" ]]; then
@@ -235,7 +201,6 @@ else
         echo "🔧 Installing pip-tools..."
         pip install pip-tools $break_system_flag
         check_success "pip-tools installation"
-        install_req
     else
         echo "❌ Installation aborted by user."
     fi
@@ -348,15 +313,10 @@ elif [[ "$USER_SHELL" == "zsh" ]]; then
 else
     echo "⚠️ Unsupported shell: $USER_SHELL"
     exit 1
-
-
-
 fi
 
 echo "✅ Shell detected: $USER_SHELL"
 echo "📌 Configuring: $SHELL_RC"
-
-
 touch "$SHELL_RC"
 
 add_to_shell_rc() {
