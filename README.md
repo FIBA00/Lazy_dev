@@ -1,5 +1,8 @@
 # Lazy  Setup me Script
 - One line command if you dont want to read the entire README.
+```bash
+git clone https://github.com/FIBA00/Lazy_dev.git && cd Lazy_dev && chmod +x setup.sh && ./setup.sh
+```
 
       
 
