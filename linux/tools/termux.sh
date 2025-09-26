@@ -13,32 +13,32 @@ source ../utils/logger.sh
 # Detect platform: Linux or Termux
 
 # Update system
-echo "🔄 Updating packages..."
+log_info "🔄 Updating packages..."
 $SUDO $PACKAGE_MANAGER update -y
 $SUDO $PACKAGE_MANAGER upgrade -y
 
 # Install Git
-echo "🔧 Installing Git..."
+log_info "🔧 Installing Git..."
 $SUDO $PACKAGE_MANAGER install git -y
 
 # Install Python
-echo "🐍 Installing Python and pip..."
+log_info "🐍 Installing Python and pip..."
 $SUDO $PACKAGE_MANAGER install python -y
-$SUDO $PACKAGE_MANAGER install python-pip -y || echo "✅ pip comes with Python in Termux"
+$SUDO $PACKAGE_MANAGER install python-pip -y || log_info "✅ pip comes with Python in Termux"
 
 # Install extra tools
-echo "🔧 Installing dev tools..."
+log_info "🔧 Installing dev tools..."
 $SUDO $PACKAGE_MANAGER install curl wget unzip jq htop -y
 
 # Configure Git
-echo "🔧 Git configuration..."
+log_info "🔧 Git configuration..."
 read -p "Enter Git username: " git_username
 read -p "Enter Git email: " git_email
 git config --global user.name "$git_username"
 git config --global user.email "$git_email"
 
 # SSH setup
-echo "🔐 Setting up SSH..."
+log_info "🔐 Setting up SSH..."
 $SUDO $PACKAGE_MANAGER install openssh -y
 SSH_KEY="$HOME/.ssh/id_ed25519"
 if [ ! -f "$SSH_KEY" ]; then
@@ -47,11 +47,11 @@ if [ ! -f "$SSH_KEY" ]; then
     eval "$(ssh-agent -s)"
     ssh-add "$SSH_KEY"
     cat "$SSH_KEY.pub"
-    echo "📌 Add this key to GitHub"
+    log_info "📌 Add this key to GitHub"
 fi
 
 # Aliases
-echo "🔧 Adding aliases..."
+log_info "🔧 Adding aliases..."
 SHELL_RC="$HOME/.bashrc"
 echo "alias ll='ls -lah'" >> "$SHELL_RC"
 echo "alias gs='git status'" >> "$SHELL_RC"
@@ -59,7 +59,7 @@ echo "alias py='python3'" >> "$SHELL_RC"
 echo "alias pip='pip3'" >> "$SHELL_RC"
 
 source "$SHELL_RC"
-echo "✅ Done! Restart your shell or run: source $SHELL_RC"
+log_info "✅ Done! Restart your shell or run: source $SHELL_RC"
 
 # Virtual environment
 read -p "Do you want to create a virtual environment? (yes/no): " create_venv
@@ -70,5 +70,5 @@ fi
 # ==================================================================================================
 # Triggering Environment Setup
 # ==================================================================================================
-echo "===> Triggering environment setup..."
+log_info "===> Triggering environment setup..."
 source ./env.sh

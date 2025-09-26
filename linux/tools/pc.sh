@@ -2,13 +2,10 @@
 source ../utils/logger.sh
 
 # Inform the user about the script's purpose and warnings
-echo "------------------------------------------------------"
-echo "🔧 Welcome to the Lazy_dev Setup Script"
-echo " / Press Enter to continue..."
+log_info "------------------------------------------------------"
+log_info "🔧 Welcome to the Lazy_dev Setup Script"
+log_info " / Press Enter to continue..."
 read -r
-
-LOG_FILE="new_install_setup.log"
-exec > >(tee -i "$LOG_FILE") 2>&1 # Log all output to file
 
 # Function to ask for input with confirmation
 input_checkup() {
@@ -30,13 +27,13 @@ input_checkup() {
                         echo "You entered: '$user_input'. Is this correct? (yes/no)"
                         read confirmation
                         case "$confirmation" in
-                            yes|y) eval "$variable_name=\"$user_input\""; return ;;
-                            no|n) echo "😅 Try again!"; break ;;
+                            yes|y) eval "$variable_name=\"$user_input\""; return ;; 
+                            no|n) echo "😅 Try again!"; break ;; 
                             *) echo "🤨 Type 'yes' or 'no'!";;
                         esac
                     done
-                    ;;
-                *) echo "😆 Type 'yes' or 'no'." ;;
+                    ;; 
+                *) echo "😆 Type 'yes' or 'no'." ;; 
             esac
         else
             # For non-boolean inputs (e.g., Git username, email), just confirm
@@ -44,8 +41,8 @@ input_checkup() {
                 echo "You entered: '$user_input'. Is this correct? (yes/no)"
                 read confirmation
                 case "$confirmation" in
-                    yes|y) eval "$variable_name=\"$user_input\""; return ;;
-                    no|n) echo "😅 Try again!"; break ;;
+                    yes|y) eval "$variable_name=\"$user_input\""; return ;; 
+                    no|n) echo "😅 Try again!"; break ;; 
                     *) echo "🤨 Type 'yes' or 'no'!";;
                 esac
             done
@@ -55,39 +52,39 @@ input_checkup() {
 
 # Ensure the script runs as the current user, not root
 if [ "$EUID" -eq 0 ]; then
-    echo "⚠️  WARNING: You are running this script as root!"
-    echo "⚠️  Some configurations (like Git and SSH keys) should be done as your normal user."
+    log_warning "You are running this script as root!"
+    log_warning "Some configurations (like Git and SSH keys) should be done as your normal user."
     
     input_checkup "Do you still want to continue? (yes/no)" "no" continue_as_root
 
     if [[ "$continue_as_root" != "yes" && "$continue_as_root" != "y" ]]; then
-        echo "❌ Exiting script. Please run as a normal user for best results."
+        log_error "Exiting script. Please run as a normal user for best results."
         exit 1
     fi
 fi
 
-echo "🔧 Starting setup...." | tee -a "$LOG_FILE"
+log_info "🔧 Starting setup...."
 
 
 # Function to check internet connection
 check_internet() {
-    echo "🌐 Checking internet connection..."
+    log_info "🌐 Checking internet connection..."
 
     local retries=3  # Number of retries before giving up
     local wait_time=2 # Seconds to wait before retrying
     for ((i=1; i<=retries; i++)); do
-        if ping -q -c 1 -W 1 8.8.8.8 >/dev/null 2>&1 ||
-           curl -s --head https://google.com | grep "200 OK" >/dev/null ||
+        if ping -q -c 1 -W 1 8.8.8.8 >/dev/null 2>&1 || \
+           curl -s --head https://google.com | grep "200 OK" >/dev/null || \
            wget -q --spider https://google.com; then
-            echo "✅ Internet is available!"
+            log_info "✅ Internet is available!"
             return 0  # Success
         fi
 
-        echo "⚠️ No internet detected. Retrying in $wait_time seconds... ($i/$retries)"
+        log_warning "⚠️ No internet detected. Retrying in $wait_time seconds... ($i/$retries)"
         sleep $wait_time
     done
 
-    echo "❌ No internet connection detected. Skipping network-dependent tasks."
+    log_error "❌ No internet connection detected. Skipping network-dependent tasks."
     return 1  # Continue script but skip network-related tasks
 }
 
@@ -96,38 +93,38 @@ check_internet
 # Function to check command success
 check_success() {
     if [ $? -eq 0 ]; then
-        echo "✅ Completed task successfully."
+        log_info "✅ Completed task successfully."
     else
-        echo "❌ Task Failed: $1"
+        log_error "❌ Task Failed: $1"
         exit 1
     fi
 }
 
 # Add ~/.local/bin to PATH for the session
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-echo "✅ Path added to bash successfully."
+log_info "✅ Path added to bash successfully."
 source ~/.bashrc
 
 # System Update
-echo "🔧 Updating the system...." | tee -a "$LOG_FILE"
+log_info "🔧 Updating the system...." | tee -a "$LOG_FILE"
 sudo apt-get update -y
 check_success "System update"
 
 # Task 1: Git Setup
-echo "🔧 SETTING UP GIT CONFIGURATIONS"
+log_info "🔧 SETTING UP GIT CONFIGURATIONS"
 sudo apt-get install -y git
 check_success "Git installation"
 
 if command -v git &> /dev/null; then
-    echo "✅ Git is Installed: $(git --version)"
+    log_info "✅ Git is Installed: $(git --version)"
 else
-    echo "❌ Git not installed"
+    log_error "❌ Git not installed"
     exit 1
 fi
 
 # Function to configure Git
 configure_git() {
-    echo "🔧 Checking existing Git configuration..." | tee -a "$LOG_FILE"
+    log_info "🔧 Checking existing Git configuration..." | tee -a "$LOG_FILE"
 
     # Get current git settings
     current_git_username=$(git config --global user.name)
@@ -136,14 +133,14 @@ configure_git() {
 
     # If settings exist, ask if the user wants to update
     if [[ -n "$current_git_username" || -n "$current_git_email" || -n "$current_git_editor" ]]; then
-        echo "⚠️ Git is already configured with:"
-        echo "   👤 Username: $current_git_username"
-        echo "   📧 Email: $current_git_email"
-        echo "   ✏️ Editor: $current_git_editor"
+        log_warning "Git is already configured with:"
+        log_info "   👤 Username: $current_git_username"
+        log_info "   📧 Email: $current_git_email"
+        log_info "   ✏️ Editor: $current_git_editor"
         input_checkup "Do you want to update Git settings? (yes/no)" "no" update_git
 
         if [[ "$update_git" != "yes" && "$update_git" != "y" ]]; then
-            echo "✅ Keeping existing Git settings."
+            log_info "✅ Keeping existing Git settings."
             return
         fi
     fi
@@ -160,19 +157,19 @@ configure_git() {
     git config --global color.ui "auto"
     git config --global credential.helper cache
 
-    echo "✅ Git configured!"
+    log_info "✅ Git configured!"
 }
 
 # Call the function
 configure_git
 
 # Task 3: Installing Essential Development Tools
-echo "✅ Installing essential dev tools"
+log_info "✅ Installing essential dev tools"
 sudo apt-get install -y curl wget unzip jq htop
 check_success "Dev tools installation"
 
 # Task 4: SSH Keys Automation
-echo "🔧 Setting up SSH keys automation..."
+log_info "🔧 Setting up SSH keys automation..."
 if [ ! -d "$HOME/.ssh" ]; then
     mkdir -p "$HOME/.ssh"
     chmod 700 "$HOME/.ssh"
@@ -183,62 +180,62 @@ SSH_DIR="$HOME/.ssh"
 SSH_KEY_PATH="$SSH_DIR/id_ed25519"
 
 # Ensure the .ssh directory exists
-echo "📁 Ensuring $SSH_DIR directory exists..."
+log_info "📁 Ensuring $SSH_DIR directory exists..."
 mkdir -p "$SSH_DIR"
 chmod 700 "$SSH_DIR"
 
 # Check if an SSH key already exists
 if [ -f "$SSH_KEY_PATH" ]; then
-    echo "✅ An SSH key already exists at $SSH_KEY_PATH"
+    log_info "✅ An SSH key already exists at $SSH_KEY_PATH"
 else
-    echo "🔑 No SSH key found. Generating a new one..."
+    log_info "🔑 No SSH key found. Generating a new one..."
     
     # Ask the user for their GitHub email
     input_checkup "🔧 Enter your GitHub email: " "" GITHUB_EMAIL
 
     # Verify email input is not empty
     if [ -z "$GITHUB_EMAIL" ]; then
-        echo "❌ Email cannot be empty. Please run the script again."
+        log_error "❌ Email cannot be empty. Please run the script again."
         exit 1
     fi
 
-    echo "🔧 Generating SSH key..."
+    log_info "🔧 Generating SSH key..."
     ssh-keygen -t ed25519 -C "$GITHUB_EMAIL" -f "$SSH_KEY_PATH" -N ""
     if [ $? -ne 0 ]; then
-        echo "❌ SSH key generation failed."
+        log_error "❌ SSH key generation failed."
         exit 1
     fi
-    echo "✅ SSH key generated successfully."
+    log_info "✅ SSH key generated successfully."
    
     # Start SSH agent if not running
     if ! pgrep -u "$USER" ssh-agent > /dev/null; then
-        echo "🚀 Starting ssh-agent..."
+        log_info "🚀 Starting ssh-agent..."
         eval "$(ssh-agent -s)"
         if [ $? -ne 0 ]; then
-            echo "❌ Failed to start ssh-agent."
+            log_error "❌ Failed to start ssh-agent."
             exit 1
         fi
     else
-        echo "🔄 ssh-agent is already running."
+        log_info "🔄 ssh-agent is already running."
     fi
 
     # Add the SSH key to the agent
-    echo "🔑 Adding SSH key to ssh-agent..."
+    log_info "🔑 Adding SSH key to ssh-agent..."
     ssh-add "$SSH_KEY_PATH"
     if [ $? -ne 0 ]; then
-        echo "❌ Failed to add SSH key to ssh-agent."
+        log_error "❌ Failed to add SSH key to ssh-agent."
         exit 1
     fi
 
     # Display the SSH public key
-    echo "🔑 Your SSH public key:"
+    log_info "🔑 Your SSH public key:"
     cat "$SSH_KEY_PATH.pub"
-    echo "------------------------------------------------------"
-    echo "📌 Copy the above key and add it to your GitHub account:"
-    echo "  - Go to GitHub → Settings → SSH and GPG Keys"
-    echo "  - Click 'New SSH Key' and paste the copied key"
-    echo "  - Click 'Add SSH Key'"
-    echo "------------------------------------------------------"
+    log_info "------------------------------------------------------"
+    log_info "📌 Copy the above key and add it to your GitHub account:"
+    log_info "  - Go to GitHub → Settings → SSH and GPG Keys"
+    log_info "  - Click 'New SSH Key' and paste the copied key"
+    log_info "  - Click 'Add SSH Key'"
+    log_info "------------------------------------------------------"
     input_checkup "✅ Have you added the SSH key to GitHub? (yes/no): " "yes" github_confirm
 
     # Wait for user confirmation before testing connection
@@ -247,53 +244,52 @@ else
     done
 
     # Test GitHub SSH connection and store output
-    echo "🔄 Testing SSH connection to GitHub..."
+    log_info "🔄 Testing SSH connection to GitHub..."
     SSH_OUTPUT=$(ssh -T git@github.com 2>&1)
 
     # Check for "successfully authenticated" in the output (handle dynamic username)
     if echo "$SSH_OUTPUT" | grep -q "successfully authenticated"; then
-        echo "🎉 SSH authentication successful! You're ready to use GitHub with SSH."
+        log_info "🎉 SSH authentication successful! You're ready to use GitHub with SSH."
     else
-        echo "❌ SSH authentication failed. Check your GitHub SSH settings."
-        echo "📌 Output received: $SSH_OUTPUT"
+        log_error "❌ SSH authentication failed. Check your GitHub SSH settings."
+        log_error "📌 Output received: $SSH_OUTPUT"
         exit 1
     fi
 
 fi
-echo "✅ SSH setup completed!"
+log_info "✅ SSH setup completed!"
 
 # Task 5: Adding Aliases & Custom Functions to Shell Configuration
-USER_SHELL=$(basename "$SHELL"
-)
+USER_SHELL=$(basename "$SHELL")
 
 if [[ "$USER_SHELL" == "bash" ]]; then
     SHELL_RC="$HOME/.bashrc"
 elif [[ "$USER_SHELL" == "zsh" ]]; then
     SHELL_RC="$HOME/.zshrc"
 else
-    echo "⚠️ Unsupported shell: $USER_SHELL"
+    log_warning "⚠️ Unsupported shell: $USER_SHELL"
     exit 1
 fi
 
-echo "✅ Shell detected: $USER_SHELL"
-echo "📌 Configuring: $SHELL_RC"
+log_info "✅ Shell detected: $USER_SHELL"
+log_info "📌 Configuring: $SHELL_RC"
 touch "$SHELL_RC"
 
 add_to_shell_rc() {
     local line="$1"
     if ! grep -qxF "$line" "$SHELL_RC"; then
         echo "$line" >> "$SHELL_RC"
-        echo "✅ Added: $line"
+        log_info "✅ Added: $line"
     else
-        echo "❌ Already exists: $line"
+        log_warning "❌ Already exists: $line"
     fi
 }
 
-echo "🔧 Adding aliases and functions to "$SHELL_RC"..."
+log_info "🔧 Adding aliases and functions to $SHELL_RC..."
 add_to_shell_rc "alias ll='ls -lah --color=auto'"
 add_to_shell_rc "alias gs='git status'"
 add_to_shell_rc "alias gp='git pull'"
-add_to_shell_rc "alias ga='git add .'"
+add_to_shell_rc "alias ga='git add ."'
 add_to_shell_rc "alias gc='git commit -m'"
 add_to_shell_rc "alias gco='git checkout'"
 add_to_shell_rc "alias venv='source venv/bin/activate'"
@@ -306,7 +302,7 @@ if ! grep -q "aliases_help()" "$SHELL_RC"; then
     cat <<EOL >> "$SHELL_RC"
 
 # Function to display alias descriptions
-aliases_help() {
+alias_help() {
     echo ""
     echo "📌 Custom Aliases Help:"
     echo "---------------------------------------"
@@ -324,19 +320,19 @@ aliases_help() {
     echo "💡 Type 'aliases_help' anytime to see this list."
 }
 EOL
-    echo "✅ aliases_help function added."
+    log_info "✅ aliases_help function added."
 else
-    echo "⚠️ aliases_help function already exists."
-}
+    log_warning "⚠️ aliases_help function already exists."
+fi
 
 # Reload shell configuration
-echo "🔄 Reloading "$SHELL_RC"..."
+log_info "🔄 Reloading $SHELL_RC..."
 source "$SHELL_RC"
 
-echo "🎉 Shell customization complete! Type 'aliases_help' to test."
+log_info "🎉 Shell customization complete! Type 'aliases_help' to test."
 
 # Task 2: Python & Virtual Environment Setup
-echo "🔧 SETTING UP PYTHON AND VIRTUAL ENVIRONMENT"
+log_info "🔧 SETTING UP PYTHON AND VIRTUAL ENVIRONMENT"
 sudo apt-get install -y python3 python3-pip python3-venv
 check_success "Python installation"
 
@@ -345,9 +341,9 @@ create_venv() {
     input_checkup "🔧 Enter name of the virtual environment (default: venv): " "venv" venv_name
     
     if [ -d "$venv_name" ]; then
-        echo "✅ Virtual environment '$venv_name' already exists."
+        log_info "✅ Virtual environment '$venv_name' already exists."
     else
-        echo "🔧 Creating a new Python virtual environment..."
+        log_info "🔧 Creating a new Python virtual environment..."
         python3 -m venv "$venv_name"
         check_success "Virtual environment creation"
     fi
@@ -368,16 +364,16 @@ else
     input_checkup "🔧 Do you want to install packages globally with --break-system-packages? (yes/no): " "no" break_system
     if [[ "$break_system" == "yes" || "$break_system" == "y" ]]; then
         break_system_flag="--break-system-packages"
-        echo "🔧 Installing pip-tools..."
+        log_info "🔧 Installing pip-tools..."
         pip install pip-tools $break_system_flag
         check_success "pip-tools installation"
     else
-        echo "❌ Installation aborted by user."
+        log_error "❌ Installation aborted by user."
     fi
 fi
 
 # ==================================================================================================
 # Triggering Environment Setup
 # ==================================================================================================
-echo "===> Triggering environment setup..."
+log_info "===> Triggering environment setup..."
 source ./env.sh

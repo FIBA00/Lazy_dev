@@ -5,7 +5,7 @@ source ../utils/logger.sh
 #
 # Title: Lazy_dev Environment Setup
 # Description: This script detects the operating system and calls the appropriate
-#              environment setup script from the Setup directory.
+#              environment setup script.
 # Author: Gemini
 # Date: 2025-09-26
 #
@@ -34,25 +34,23 @@ detect_os() {
 # Main script logic
 main() {
     OS=$(detect_os)
-    echo "===> Detected Operating System for environment setup: $OS"
+    log_info "===> Detected Operating System for environment setup: $OS"
 
     case "$OS" in
         "Linux" | "Termux")
-            echo "===> Running Linux environment setup..."
+            log_info "===> Running Linux environment setup..."
             source ./setup_linux_env.sh
-            ;; 
+            ;;
         "MacOS")
-            echo "===> MacOS environment setup is not yet implemented."
-            # source ../Setup/setup_macos_env.sh
-            ;; 
+            log_warning "===> MacOS environment setup is not yet implemented."
+            ;;
         "Windows")
-            echo "===> Windows environment setup is not yet implemented."
-            # source ../Setup/setup_windows_env.ps1
-            ;; 
+            log_warning "===> Windows environment setup is not yet implemented."
+            ;;
         *)
-            echo "===> Unsupported operating system for environment setup."
+            log_error "===> Unsupported operating system for environment setup."
             exit 1
-            ;; 
+            ;;
     esac
 }
 
