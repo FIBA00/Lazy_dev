@@ -165,47 +165,6 @@ configure_git() {
 # Call the function
 configure_git
 
-# Task 2: Python & Virtual Environment Setup
-echo "🔧 SETTING UP PYTHON AND VIRTUAL ENVIRONMENT"
-sudo apt-get install -y python3 python3-pip python3-venv
-check_success "Python installation"
-
-# Function to create a virtual environment
-create_venv() {
-    input_checkup "🔧 Enter name of the virtual environment (default: venv): " "venv" venv_name
-    
-    if [ -d "$venv_name" ]; then
-        echo "✅ Virtual environment '$venv_name' already exists."
-    else
-        echo "🔧 Creating a new Python virtual environment..."
-        python3 -m venv "$venv_name"
-        check_success "Virtual environment creation"
-    fi
-    
-    # Activate the virtual environment
-    source "$venv_name/bin/activate"
-}
-
-
-# Ask the user if they want to create a virtual environment
-input_checkup "🔧 Do you want to create a new virtual environment? (yes/no): " "yes" should_create_venv
-
-# Global variable to store --break-system-packages flag
-break_system_flag=""
-if [[ "$should_create_venv" == "yes" || "$should_create_venv" == "y" ]]; then
-    create_venv
-else
-    input_checkup "🔧 Do you want to install packages globally with --break-system-packages? (yes/no): " "no" break_system
-    if [[ "$break_system" == "yes" || "$break_system" == "y" ]]; then
-        break_system_flag="--break-system-packages"
-        echo "🔧 Installing pip-tools..."
-        pip install pip-tools $break_system_flag
-        check_success "pip-tools installation"
-    else
-        echo "❌ Installation aborted by user."
-    fi
-fi
-
 # Task 3: Installing Essential Development Tools
 echo "✅ Installing essential dev tools"
 sudo apt-get install -y curl wget unzip jq htop
@@ -329,7 +288,7 @@ add_to_shell_rc() {
     fi
 }
 
-echo "🔧 Adding aliases and functions to $SHELL_RC..."
+echo "🔧 Adding aliases and functions to "$SHELL_RC"..."
 add_to_shell_rc "alias ll='ls -lah --color=auto'"
 add_to_shell_rc "alias gs='git status'"
 add_to_shell_rc "alias gp='git pull'"
@@ -367,10 +326,57 @@ EOL
     echo "✅ aliases_help function added."
 else
     echo "⚠️ aliases_help function already exists."
-fi
+}
 
 # Reload shell configuration
-echo "🔄 Reloading $SHELL_RC..."
+echo "🔄 Reloading "$SHELL_RC"..."
 source "$SHELL_RC"
 
 echo "🎉 Shell customization complete! Type 'aliases_help' to test."
+
+# Task 2: Python & Virtual Environment Setup
+echo "🔧 SETTING UP PYTHON AND VIRTUAL ENVIRONMENT"
+sudo apt-get install -y python3 python3-pip python3-venv
+check_success "Python installation"
+
+# Function to create a virtual environment
+create_venv() {
+    input_checkup "🔧 Enter name of the virtual environment (default: venv): " "venv" venv_name
+    
+    if [ -d "$venv_name" ]; then
+        echo "✅ Virtual environment '$venv_name' already exists."
+    else
+        echo "🔧 Creating a new Python virtual environment..."
+        python3 -m venv "$venv_name"
+        check_success "Virtual environment creation"
+    fi
+    
+    # Activate the virtual environment
+    source "$venv_name/bin/activate"
+}
+
+
+# Ask the user if they want to create a virtual environment
+input_checkup "🔧 Do you want to create a new virtual environment? (yes/no): " "yes" should_create_venv
+
+# Global variable to store --break-system-packages flag
+break_system_flag=""
+if [[ "$should_create_venv" == "yes" || "$should_create_venv" == "y" ]]; then
+    create_venv
+else
+    input_checkup "🔧 Do you want to install packages globally with --break-system-packages? (yes/no): " "no" break_system
+    if [[ "$break_system" == "yes" || "$break_system" == "y" ]]; then
+        break_system_flag="--break-system-packages"
+        echo "🔧 Installing pip-tools..."
+        pip install pip-tools $break_system_flag
+        check_success "pip-tools installation"
+    else
+        echo "❌ Installation aborted by user."
+    fi
+fi
+
+# ==================================================================================================
+# Triggering Environment Setup
+# ==================================================================================================
+echo "===> Triggering environment setup..."
+source ./env.sh

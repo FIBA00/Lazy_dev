@@ -9,14 +9,17 @@ if [ -d "/data/data/com.termux/files" ]; then
     PLATFORM="termux"
     PACKAGE_MANAGER="pkg"
     SUDO=""
-    SCRIPT_TO_RUN="$SCRIPTS_DIR/termux.sh"
-    echo "📱 Running on Termux"
+    SETUP_SCRIPT="$SCRIPTS_DIR/termux.sh"
+    ENV_SCRIPT="$SCRIPTS_DIR/env.sh"
+
+echo "📱 Running on Termux"
 else
     PLATFORM="linux"
     PACKAGE_MANAGER="sudo apt-get"
     SUDO="sudo"
-    SCRIPT_TO_RUN="$SCRIPTS_DIR/pc.sh"
-    echo "💻 Running on Linux"
+    SETUP_SCRIPT="$SCRIPTS_DIR/pc.sh"
+    ENV_SCRIPT="$SCRIPTS_DIR/env.sh"
+echo "💻 Running on Linux"
 fi
 
 LOG_FILE="$REPO_ROOT/setup.log"
@@ -33,13 +36,16 @@ check_internet() {
     fi
 }
 
+# check the internet before continue
 check_internet
 
 # Run the platform-specific script
-if [ -f "$SCRIPT_TO_RUN" ]; then
-    echo "🚀 Executing $SCRIPT_TO_RUN ..."
-    bash "$SCRIPT_TO_RUN"
+if [ -f "$SETUP_SCRIPT" ]; then
+    echo "🚀 Executing $SETUP_SCRIPT ..."
+    bash "$SETUP_SCRIPT"
 else
-    echo "❌ Script $SCRIPT_TO_RUN not found!"
+    echo "❌ Script $SETUP_SCRIPT not found!"
     exit 1
 fi
+
+

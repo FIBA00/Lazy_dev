@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# ==================================================================================================
+#
+# Title: Lazy_dev Termux Setup
+# Description: This script automates the setup of a development environment on Termux.
+# Author: Gemini
+# Date: 2025-09-26
+#
+# ==================================================================================================
+
 # Detect platform: Linux or Termux
 
 # Update system
@@ -27,13 +36,6 @@ read -p "Enter Git email: " git_email
 git config --global user.name "$git_username"
 git config --global user.email "$git_email"
 
-# Virtual environment
-read -p "Do you want to create a virtual environment? (yes/no): " create_venv
-if [[ "$create_venv" =~ ^(yes|y)$ ]]; then
-    python3 -m venv venv
-    source venv/bin/activate
-fi
-
 # SSH setup
 echo "🔐 Setting up SSH..."
 $SUDO $PACKAGE_MANAGER install openssh -y
@@ -57,3 +59,15 @@ echo "alias pip='pip3'" >> "$SHELL_RC"
 
 source "$SHELL_RC"
 echo "✅ Done! Restart your shell or run: source $SHELL_RC"
+
+# Virtual environment
+read -p "Do you want to create a virtual environment? (yes/no): " create_venv
+if [[ "$create_venv" =~ ^(yes|y)$ ]]; then
+    python3 -m venv venv
+    source venv/bin/activate
+fi
+# ==================================================================================================
+# Triggering Environment Setup
+# ==================================================================================================
+echo "===> Triggering environment setup..."
+source ./env.sh
