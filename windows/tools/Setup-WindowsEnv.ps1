@@ -2,67 +2,70 @@
 # This script mirrors the Linux setup_linux_env.sh functionality
 # Creates a shared virtual environment for all projects under Documents/Code
 
+# Source the logger utility
+. "$PSScriptRoot\..\utils\Logger.ps1"
+
 param(
     [string]$BaseDir = "C:\Users\$env:USERNAME\Documents\Code",
     [string]$PythonVersion = "python",
     [switch]$Force
 )
 
-Write-Host "=== Windows Python Environment Setup (Fixed Version) ===" -ForegroundColor Green
-Write-Host "This script creates a shared environment similar to Linux direnv setup" -ForegroundColor Cyan
+Write-Info "=== Windows Python Environment Setup (Fixed Version) ==="
+Write-Info "This script creates a shared environment similar to Linux direnv setup"
 
 # === CONFIG ===
 $ENV_DIR = ".SMART_ENV"
 $ENV_PATH = Join-Path $BaseDir $ENV_DIR
 $COMMON_PACKAGES = @("requests", "psutil", "python-dotenv", "speedtest-cli")
 
-Write-Host "`n=== Configuration ===" -ForegroundColor Yellow
-Write-Host "Base Directory: $BaseDir" -ForegroundColor White
-Write-Host "Environment Path: $ENV_PATH" -ForegroundColor White
-Write-Host "Common Packages: $($COMMON_PACKAGES -join ', ')" -ForegroundColor White
+Write-Info "`n=== Configuration ==="
+Write-Info "Base Directory: $BaseDir"
+Write-Info "Environment Path: $ENV_PATH"
+Write-Info "Common Packages: $($COMMON_PACKAGES -join ', ')"
 
 # === Ensure base directory exists ===
-Write-Host "`n===> Ensuring base directory exists at $BaseDir..." -ForegroundColor Yellow
+Write-Info "`n===> Ensuring base directory exists at $BaseDir..."
 if (-not (Test-Path $BaseDir)) {
     New-Item -ItemType Directory -Path $BaseDir -Force | Out-Null
-    Write-Host "Created base directory: $BaseDir" -ForegroundColor Green
+    Write-Info "Created base directory: $BaseDir"
 } else {
-    Write-Host "Base directory already exists: $BaseDir" -ForegroundColor Green
+    Write-Info "Base directory already exists: $BaseDir"
 }
 
 # === Check Python ===
-Write-Host "`n===> Checking Python installation..." -ForegroundColor Yellow
+Write-Info "`n===> Checking Python installation..."
 try {
     $pythonVersionOutput = & $PythonVersion --version 2>&1
-    Write-Host "Found Python: $pythonVersionOutput" -ForegroundColor Green
+    Write-Info "Found Python: $pythonVersionOutput"
 } catch {
-    Write-Host "Error: Python not found. Please install Python and add it to PATH." -ForegroundColor Red
-    Write-Host "Download from: https://www.python.org/downloads/" -ForegroundColor Yellow
+    Write-Error "Error: Python not found. Please install Python and add it to PATH."
+    Write-Warning "Download from: https://www.python.org/downloads/"
     exit 1
 }
 
 # === Create Virtual Environment ===
 if (-not (Test-Path $ENV_PATH) -or $Force) {
     if ($Force -and (Test-Path $ENV_PATH)) {
-        Write-Host "`n===> Force flag detected, removing existing environment..." -ForegroundColor Yellow
+        Write-Warning "`n===> Force flag detected, removing existing environment..."
         Remove-Item -Path $ENV_PATH -Recurse -Force
     }
     
-    Write-Host "`n===> Creating shared virtual environment at $ENV_PATH" -ForegroundColor Yellow
+    Write-Info "`n===> Creating shared virtual environment at $ENV_PATH"
     & $PythonVersion -m venv $ENV_PATH
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "Virtual environment created successfully!" -ForegroundColor Green
+        Write-Info "Virtual environment created successfully!"
     } else {
-        Write-Host "Failed to create virtual environment." -ForegroundColor Red
+        Write-Error "Failed to create virtual environment."
         exit 1
     }
 } else {
-    Write-Host "`n===> Virtual environment already exists at $ENV_PATH" -ForegroundColor Green
+    Write-Info "`n===> Virtual environment already exists at $ENV_PATH"
 }
 
 # === Install common packages ===
-Write-Host "`n===> Installing common packages: $($COMMON_PACKAGES -join ', ')" -ForegroundColor Yellow
+Write-Info "`n===> Installing common packages: $($COMMON_PACKAGES -join ', ')"
 $activateScript = Join-Path $ENV_PATH "Scripts\Activate.ps1"
 
 if (Test-Path $activateScript) {
@@ -70,28 +73,28 @@ if (Test-Path $activateScript) {
     & $activateScript
     
     # Upgrade pip
-    Write-Host "Upgrading pip..." -ForegroundColor Cyan
+    Write-Info "Upgrading pip..."
     python -m pip install --upgrade pip --quiet
     
     # Install common packages
-    Write-Host "Installing common packages..." -ForegroundColor Cyan
+    Write-Info "Installing common packages..."
     foreach ($package in $COMMON_PACKAGES) {
-        Write-Host "  Installing $package..." -ForegroundColor Gray
+        Write-Debug "  Installing $package..."
         pip install $package --quiet
     }
     
-    Write-Host "Common packages installed successfully!" -ForegroundColor Green
+    Write-Info "Common packages installed successfully!"
     
     # Deactivate environment
     deactivate
 } else {
-    Write-Host "Error: Could not find activation script at $activateScript" -ForegroundColor Red
+    Write-Error "Error: Could not find activation script at $activateScript"
     exit 1
 }
 
 # === Setup .envrc for PowerShell profile ===
 $ENVRC_FILE = Join-Path $BaseDir ".envrc"
-Write-Host "`n===> Writing simple .envrc to $ENVRC_FILE" -ForegroundColor Yellow
+Write-Info "`n===> Writing simple .envrc to $ENVRC_FILE"
 
 $envrcContent = @"
 # Windows .envrc equivalent - Simple version like Linux
@@ -111,11 +114,11 @@ ENVIRONMENT_TYPE="SHARED"
 "@
 
 $envrcContent | Out-File -FilePath $ENVRC_FILE -Encoding UTF8 -Force
-Write-Host "Created .envrc file: $ENVRC_FILE" -ForegroundColor Green
+Write-Info "Created .envrc file: $ENVRC_FILE"
 
 # === Create PowerShell profile setup script ===
 $profileSetupScript = Join-Path $BaseDir "setup_powershell_profile.ps1"
-Write-Host "`n===> Creating PowerShell profile setup script..." -ForegroundColor Yellow
+Write-Info "`n===> Creating PowerShell profile setup script..."
 
 $profileSetupContent = @'
 # PowerShell Profile Setup for Auto-Activation
@@ -156,7 +159,7 @@ function Activate-IfNeeded {
             `$envrcPath = "C:\Users\`$env:USERNAME\Documents\Code\.envrc"
             if (Test-Path `$envrcPath) {
                 `$envrcContent = Get-Content `$envrcPath -Raw
-                if (`$envrcContent -match 'VENV_PATH="([^"]+)"') {
+                if (`$envrcContent -match 'VENV_PATH="([^\"]+)"' ) {
                     `$venvPath = `$matches[1]
                     `$activateScript = Join-Path `$venvPath "Scripts\Activate.ps1"
                     if (Test-Path `$activateScript) {
@@ -197,11 +200,11 @@ Write-Host "Now the environment will auto-activate when you enter Documents/Code
 '@
 
 $profileSetupContent | Out-File -FilePath $profileSetupScript -Encoding UTF8 -Force
-Write-Host "Created PowerShell profile setup script: $profileSetupScript" -ForegroundColor Green
+Write-Info "Created PowerShell profile setup script: $profileSetupScript"
 
 # === Create simple activation script ===
 $activateScriptPath = Join-Path $BaseDir "activate.ps1"
-Write-Host "`n===> Creating simple activation script..." -ForegroundColor Yellow
+Write-Info "`n===> Creating simple activation script..."
 
 $activateContent = @'
 # Simple Python Environment Activator - Windows Version
@@ -274,21 +277,21 @@ if (Test-Path $activateScript) {
 '@
 
 $activateContent | Out-File -FilePath $activateScriptPath -Encoding UTF8 -Force
-Write-Host "Created simple activation script: $activateScriptPath" -ForegroundColor Green
+Write-Info "Created simple activation script: $activateScriptPath"
 
 # === Final message ===
-Write-Host "`n=== ALL DONE! ===" -ForegroundColor Green
-Write-Host "`n🔗 SHARED Environment Setup Complete:" -ForegroundColor Cyan
-Write-Host "   Base Directory: $BaseDir" -ForegroundColor White
-Write-Host "   Virtual Environment: $ENV_PATH" -ForegroundColor White
-Write-Host "   .envrc File: $ENVRC_FILE" -ForegroundColor White
-Write-Host "   Activation Script: $activateScriptPath" -ForegroundColor White
+Write-Info "`n=== ALL DONE! ==="
+Write-Info "`n🔗 SHARED Environment Setup Complete:"
+Write-Info "   Base Directory: $BaseDir"
+Write-Info "   Virtual Environment: $ENV_PATH"
+Write-Info "   .envrc File: $ENVRC_FILE"
+Write-Info "   Activation Script: $activateScriptPath"
 
-Write-Host "`n📋 Next Steps:" -ForegroundColor Yellow
-Write-Host "1. Run: .\setup_powershell_profile.ps1" -ForegroundColor White
-Write-Host "2. Restart PowerShell" -ForegroundColor White
-Write-Host "3. Navigate to any subdirectory of $BaseDir" -ForegroundColor White
-Write-Host "4. Environment will auto-activate (like Linux direnv)!" -ForegroundColor White
+Write-Warning "`n📋 Next Steps:"
+Write-Warning "1. Run: .\setup_powershell_profile.ps1"
+Write-Warning "2. Restart PowerShell"
+Write-Warning "3. Navigate to any subdirectory of $BaseDir"
+Write-Warning "4. Environment will auto-activate (like Linux direnv)!"
 
-Write-Host "`n🎯 Manual activation: .\activate.ps1" -ForegroundColor Cyan
-Write-Host "🎯 Test: cd $BaseDir\test_project; python --version" -ForegroundColor Cyan
+Write-Info "`n🎯 Manual activation: .\activate.ps1"
+Write-Info "🎯 Test: cd $BaseDir\test_project; python --version"

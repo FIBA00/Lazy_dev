@@ -1,5 +1,5 @@
 #!/bin/bash
-source ../logger.sh
+source ../utils/logger.sh
 
 # ==================================================================================================
 #
@@ -39,7 +39,7 @@ main() {
     case "$OS" in
         "Linux" | "Termux")
             echo "===> Running Linux environment setup..."
-            source ../Setup/setup_linux_env.sh
+            source ./setup_linux_env.sh
             ;; 
         "MacOS")
             echo "===> MacOS environment setup is not yet implemented."

@@ -1,5 +1,5 @@
 #!/bin/bash
-source ../../logger.sh
+source ../utils/logger.sh
 
 set -euo pipefail
 IFS=$'\n\t'

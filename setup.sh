@@ -1,38 +1,27 @@
 #!/bin/bash
-source ./logger.sh
+source ./linux/utils/logger.sh
+source ./linux/utils/platform_detect.sh
 
 # Determine the directory of the current script (repo root)
 REPO_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-SCRIPTS_DIR="$REPO_ROOT/scripts"  # Put your pc.sh and termux.sh here
+TOOLS_DIR="$REPO_ROOT/linux/tools"
 
 # Detect platform: Linux or Termux
-if [ -d "/data/data/com.termux/files" ]; then
-    PLATFORM="termux"
-    PACKAGE_MANAGER="pkg"
-    SUDO=""
-    SETUP_SCRIPT="$SCRIPTS_DIR/termux.sh"
-    ENV_SCRIPT="$SCRIPTS_DIR/env.sh"
-
-echo "📱 Running on Termux"
+if [ "$PLATFORM" == "termux" ]; then
+    SETUP_SCRIPT="$TOOLS_DIR/termux.sh"
+    log_info "📱 Running on Termux"
 else
-    PLATFORM="linux"
-    PACKAGE_MANAGER="sudo apt-get"
-    SUDO="sudo"
-    SETUP_SCRIPT="$SCRIPTS_DIR/pc.sh"
-    ENV_SCRIPT="$SCRIPTS_DIR/env.sh"
-echo "💻 Running on Linux"
+    SETUP_SCRIPT="$TOOLS_DIR/pc.sh"
+    log_info "💻 Running on Linux"
 fi
-
-LOG_FILE="$REPO_ROOT/setup.log"
-exec > >(tee -i "$LOG_FILE") 2>&1
 
 # Function to check internet
 check_internet() {
-    echo "🌐 Checking internet..."
+    log_info "🌐 Checking internet..."
     if ping -q -c 1 -W 1 8.8.8.8 >/dev/null 2>&1; then
-        echo "✅ Internet OK"
+        log_info "✅ Internet OK"
     else
-        echo "❌ No internet connection"
+        log_error "❌ No internet connection"
         exit 1
     fi
 }
@@ -42,10 +31,10 @@ check_internet
 
 # Run the platform-specific script
 if [ -f "$SETUP_SCRIPT" ]; then
-    echo "🚀 Executing $SETUP_SCRIPT ..."
+    log_info "🚀 Executing $SETUP_SCRIPT ..."
     bash "$SETUP_SCRIPT"
 else
-    echo "❌ Script $SETUP_SCRIPT not found!"
+    log_error "❌ Script $SETUP_SCRIPT not found!"
     exit 1
 fi
 

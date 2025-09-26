@@ -1,5 +1,5 @@
 #!/bin/bash
-source ../logger.sh
+source ../utils/logger.sh
 
 # Inform the user about the script's purpose and warnings
 echo "------------------------------------------------------"
