@@ -1,4 +1,5 @@
 #!/bin/bash
+source ./logger.sh
 
 # Determine the directory of the current script (repo root)
 REPO_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
